@@ -65,7 +65,7 @@ class Trainer():
                 for _ in range(self.globalParams.numberSteps):
 
                     actorValue, criticValue, modelState = self.localModel(
-                        tf.expand_dims(state, 0), modelState)
+                        [tf.expand_dims(state, 0), modelState])
                     values.append(criticValue)
 
                     probabilityDistro = tf.nn.softmax(actorValue, axis=1)
@@ -97,7 +97,7 @@ class Trainer():
 
                 if not done:
                     actorValue, criticValue, modelState = self.localModel(
-                        tf.expand_dims(state, 0), modelState)
+                        [tf.expand_dims(state, 0), modelState])
                     cumulativeReward = criticValue
                 else:
                     _, modelState = self.localModel.warmupCall(

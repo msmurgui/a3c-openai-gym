@@ -53,7 +53,7 @@ class Validator():
                 modelState = (hx, cx)
 
             actorValue, _, modelState = self.localModel(
-                tf.expand_dims(state, 0), modelState)
+               [ tf.expand_dims(state, 0), modelState])
 
             probabilityDistro = tf.nn.softmax(actorValue)
             nextAction = tf.math.argmax(probabilityDistro, 1 )

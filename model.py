@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-class ActorCritic(tf.keras.Model):
+class ActorCritic(tf.keras.models.Model):
     '''
     len(convolution_layers) = number of convolution layers, 
     convolution_layers[i][0] = kernel shape (square)
@@ -13,8 +13,8 @@ class ActorCritic(tf.keras.Model):
     fully_connected_layers[i] = # of neurons per layer
     '''
 
-    def __init__(self, name, numberOutputs, convolutionLayers, denseLayers, lstmUnits, training):
-        super(ActorCritic, self).__init__(name=name)
+    def __init__(self, name, numberOutputs, convolutionLayers, denseLayers, lstmUnits, training, **kwargs):
+        super().__init__(name=name, **kwargs)
         self.training = training
 
         # Convolutional Layers
@@ -51,7 +51,8 @@ class ActorCritic(tf.keras.Model):
         # Critic Layer
         self.critic = tf.keras.layers.Dense(1, activation='linear')
 
-    def call(self, inputTensor, state):
+    def call(self, inputAndState, training):
+        inputTensor, state = inputAndState
         x = self.convolutionalLayerCall(inputTensor)
         x, state = self.lstmLayerCall(x, state)
         actorValues, criticValues = self.outputLayerCall(x)

@@ -58,7 +58,7 @@ else:
 initState = env.reset()
 initState = tf.convert_to_tensor(initState, dtype=np.float32)
 pred, initialModelState = globalModel.warmupCall(tf.expand_dims(initState, 0))
-globalModel(tf.expand_dims(initState, 0), initialModelState)
+globalModel([tf.expand_dims(initState, 0), initialModelState])
 globalModel.summary()
 
 validator = Validator(validatorId=parameters.numberProcesses-1,

@@ -62,14 +62,15 @@ initState = env.reset()
 initState = tf.convert_to_tensor(initState, dtype=np.float32)
 
 print('Shape: ', initState.shape )
-print( 'Expanded shape: ', tf.expand_dims(initState, 1).shape)
+print( 'Expanded shape: ', tf.expand_dims(initState, 0).shape)
 
 pred, initialModelState = globalModel.warmupCall(tf.expand_dims(initState, 0))
-globalModel(tf.expand_dims(initState, 0), initialModelState)
+globalModel([tf.expand_dims(initState, 0), initialModelState])
 globalModel.summary()
 
 # Trainer Threads created for model training. Number of cpu threads available
 # minus 1 for validator
+'''
 for threadId in range(parameters.numberProcesses):
     print('Trainer ', threadId, ' process created.')
     trainer = Trainer(trainerId=threadId,
@@ -95,3 +96,4 @@ for threadId in range(parameters.numberProcesses):
 #trainerThreads.append(thread)
 
 coordinator.join(trainerThreads)
+'''
