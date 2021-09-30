@@ -1,6 +1,6 @@
 from model import ActorCritic
 from envs import create_atari_env
-from livePlotter import livePlotter
+from utils.livePlotter import livePlotter
 import tensorflow as tf
 import numpy as np
 import time
@@ -35,26 +35,22 @@ class Trainer():
     def train(self):
         state = self.env.reset()
         episodeCount = 0
-        avgCount = 0
         done = True
         modelState = self.initialModelState
 
-        #x_vec = np.linspace(0, 1, 300+1)[0:-1]
-        #y_vec = np.random.randn(len(x_vec))
-        #line1 = []
-
+        avgCount = 0
         movingAverageLoss = []
         for _ in range(100):
             movingAverageLoss.append(0)
-        
+
         while not self.coordinator.should_stop():
             with tf.GradientTape() as tape:
                 episodeCount += 1
                 avgCount += 1
                 self.localModel.set_weights(self.globalModel.get_weights())
                 if done:
-                    cx = tf.zeros( [1, self.globalParams.lstmUnits])
-                    hx = tf.zeros( [1, self.globalParams.lstmUnits])
+                    cx = tf.zeros([1, self.globalParams.lstmUnits])
+                    hx = tf.zeros([1, self.globalParams.lstmUnits])
                     modelState = (hx, cx)
 
                 values = []
@@ -105,39 +101,22 @@ class Trainer():
 
                 values.append(cumulativeReward)
 
-                policyLoss = 0
-                valueLoss = 0
-                gae = tf.zeros((1, 1))
-                for i in reversed(range(len(rewards))):
-
-                    cumulativeReward = self.globalParams.gamma * cumulativeReward + rewards[i]
-
-                    advantage = cumulativeReward - values[i]
-
-                    valueLoss = valueLoss + 0.5 * (advantage * advantage)
-
-                    TD = rewards[i] + self.globalParams.gamma * values[i+1] - values[i]
-
-                    gae = gae * self.globalParams.gamma * self.globalParams.tau + TD
-
-                    policyLoss = policyLoss - logProbabilities[i] * gae - 0.01 * entropies[i]
-
-                loss = 0.5 * valueLoss + policyLoss
-                #loss= tf.abs(loss[0][0])
-
-                movingAverageLoss.pop(0)
-                movingAverageLoss.append(loss)
-                total = 0
-                for x in movingAverageLoss:
-                    total += x
-                print( self.name, ' moving average Loss: ', total / len(movingAverageLoss), ' iter ', avgCount)
-
-                #y_vec[-1] = loss
-                #line1 = livePlotter(x_vec, y_vec, line1)
-                #y_vec = np.append(y_vec[1:], 0.0)
+                loss = computeLoss(rewards, cumulativeReward, values,
+                                   logProbabilities, entropies, self.globalParams)
+                
+                if(self.trainerId == 0):
+                    print(self.name, " loss: ", loss)
+                    movingAverageLoss.pop(0)
+                    movingAverageLoss.append(loss)
+                    total = 0
+                    for x in movingAverageLoss:
+                        total += x
+                    print(self.name, ' moving average Loss: ', total /
+                          len(movingAverageLoss), ' iter ', avgCount)
 
                 gradients = tape.gradient(
                     loss, self.localModel.trainable_weights)
+                #Why?
                 gradients, _ = tf.clip_by_global_norm(gradients, 40.0)
 
                 self.optimizer.apply_gradients(

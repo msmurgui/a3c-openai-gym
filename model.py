@@ -22,11 +22,15 @@ class ActorCritic(tf.keras.models.Model):
         self.poolingLayers = []
         i = 0
         for convLayer in convolutionLayers:
-            self.convolutionLayers.append(tf.keras.layers.Conv2D(
-                convLayer[1], convLayer[0], padding='same', activation='relu'
-            ))
-            self.poolingLayers.append(
-                tf.keras.layers.MaxPool2D(padding='same'))
+            self.convolutionLayers.append(
+                tf.keras.Sequential([
+                    tf.keras.layers.Conv2D(
+                        convLayer[1], convLayer[0], padding='same', activation=None),
+                    tf.keras.layers.BatchNormalization(),
+                    tf.keras.layers.LeakyReLU(),
+                    tf.keras.layers.MaxPool2D(padding='same')
+                ])
+            )
             i += 1
 
         # Flattening Layer
@@ -40,16 +44,22 @@ class ActorCritic(tf.keras.models.Model):
         self.denseLayers = []
         i = 0
         for denseLayer in denseLayers:
-            self.denseLayers.append(tf.keras.layers.Dense(
-                denseLayer, activation='relu'))
+            self.denseLayers.append(
+                tf.keras.Sequential([
+                    tf.keras.layers.Dense(
+                        denseLayer, activation=None),
+                    tf.keras.layers.BatchNormalization(),
+                    tf.keras.layers.LeakyReLU(),
+                ])
+            )
             i += 1
 
         # Actor Layers
         self.actor = tf.keras.layers.Dense(
-            numberOutputs, activation='linear')
+            numberOutputs, activation=None)
 
         # Critic Layer
-        self.critic = tf.keras.layers.Dense(1, activation='linear')
+        self.critic = tf.keras.layers.Dense(1, activation=None)
 
     def call(self, inputAndState, training):
         inputTensor, state = inputAndState
@@ -60,7 +70,7 @@ class ActorCritic(tf.keras.models.Model):
 
     def warmupCall(self, inputTensor):
         x = self.convolutionalLayerCall(inputTensor)
-        x = tf.reshape(x, [1, x.shape[0] ,x.shape[1]]) #REVER!!!!
+        x = tf.reshape(x, [1, x.shape[0], x.shape[1]])  # REVER!!!!
         '''
         # x.shape => (batch, time, features)
         '''
@@ -70,9 +80,8 @@ class ActorCritic(tf.keras.models.Model):
 
     def convolutionalLayerCall(self, inputTensor):
         x = inputTensor
-        for conv, pool in zip(self.convolutionLayers, self.poolingLayers):
+        for conv in self.convolutionLayers:
             x = conv(x)
-            x = pool(x)
         x = self.flatten(x)
         return x
 
@@ -80,7 +89,7 @@ class ActorCritic(tf.keras.models.Model):
         x, state = self.lstmCell(
             inputTensor, states=state, training=self.training)
         return x, state
- 
+
     def outputLayerCall(self, inputTensor):
         x = inputTensor
         for dense in self.denseLayers:

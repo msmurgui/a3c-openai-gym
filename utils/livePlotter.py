@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
 # use ggplot style for more sophisticated visuals
 #plt.style.use('ggplot')
@@ -27,3 +28,14 @@ def livePlotter(x_vec,y1_data,line1,identifier='',pause_time=0.1):
     
     # return line so we can update it again in the next iteration
     return line1
+
+if __name__ == '__main__':
+    x_vec = np.linspace(0, 1, 300+1)[0:-1]
+    y_vec = np.random.randn(len(x_vec))
+    line1 = []
+
+    while(True):
+        y_vec[-1] = np.random.uniform()
+        line1 = livePlotter(x_vec, y_vec, line1)
+        y_vec = np.append(y_vec[1:], 0.0)
+        time.sleep(0.1)

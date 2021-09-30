@@ -18,7 +18,6 @@ class Parameters():
         self.gamma = 0.99
         self.tau = 1.
         self.seed = 1
-        # Set processes to number of available CPU threads
         self.numberProcesses = multiprocessing.cpu_count()
         self.numberSteps = 40
         self.maxEpisodeLength = 1000
@@ -70,7 +69,7 @@ globalModel.summary()
 
 # Trainer Threads created for model training. Number of cpu threads available
 # minus 1 for validator
-'''
+
 for threadId in range(parameters.numberProcesses):
     print('Trainer ', threadId, ' process created.')
     trainer = Trainer(trainerId=threadId,
@@ -96,4 +95,3 @@ for threadId in range(parameters.numberProcesses):
 #trainerThreads.append(thread)
 
 coordinator.join(trainerThreads)
-'''
