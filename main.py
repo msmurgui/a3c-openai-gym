@@ -2,6 +2,7 @@ from __future__ import print_function
 import os
 import threading
 import multiprocessing
+from config.directories import CHECKPOINTS_DIR
 from envs import create_atari_env
 from model import ActorCritic
 from trainer import Trainer
@@ -45,7 +46,7 @@ optimizer = tf.keras.optimizers.Adam(parameters.learningRate)
 
 checkpoint = tf.train.Checkpoint(model=globalModel, optimizer=optimizer)
 checkpointManager = tf.train.CheckpointManager(
-    checkpoint, './modelCheckpoint', max_to_keep=3)
+    checkpoint, CHECKPOINTS_DIR, max_to_keep=3)
 
 checkpoint.restore(checkpointManager.latest_checkpoint)
 if checkpointManager.latest_checkpoint:
@@ -59,6 +60,7 @@ trainerThreads = []
 
 initState = env.reset()
 initState = tf.convert_to_tensor(initState, dtype=np.float32)
+env.close()
 
 print('Shape: ', initState.shape )
 print( 'Expanded shape: ', tf.expand_dims(initState, 0).shape)
@@ -70,7 +72,7 @@ globalModel.summary()
 # Trainer Threads created for model training. Number of cpu threads available
 # minus 1 for validator
 
-for threadId in range(parameters.numberProcesses):
+for threadId in range(parameters.numberProcesses-1):
     print('Trainer ', threadId, ' process created.')
     trainer = Trainer(trainerId=threadId,
                       coordinator=coordinator,
@@ -83,15 +85,15 @@ for threadId in range(parameters.numberProcesses):
     trainerThreads.append(thread)
 
 # Validator thread created for model validation.
-#print('Validator ', parameters.numberProcesses-1, ' proceess created.')
-#validator = Validator(validatorId=parameters.numberProcesses-1,
-#                      coordinator=coordinator,
-#                      globalParams=parameters,
-#                      globalModel=globalModel,
-#                      globalManager=checkpointManager
-#                      )
-#thread = threading.Thread(target=validator.validate)
-#thread.start()
-#trainerThreads.append(thread)
+print('Validator ', parameters.numberProcesses-1, ' proceess created.')
+validator = Validator(validatorId=parameters.numberProcesses-1,
+                      coordinator=coordinator,
+                      globalParams=parameters,
+                      globalModel=globalModel,
+                      globalManager=checkpointManager
+                      )
+thread = threading.Thread(target=validator.validate)
+thread.start()
+trainerThreads.append(thread)
 
 coordinator.join(trainerThreads)

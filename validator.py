@@ -43,7 +43,7 @@ class Validator():
 
         
         while not self.coordinator.should_stop():
-            self.env.render()
+            #self.env.render()
             episodeCount += 1
 
             self.localModel.set_weights(self.globalModel.get_weights())

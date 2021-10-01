@@ -7,3 +7,4 @@ else:
 
 ASSETS_DIR = PROJECT_DIR + '/assets'
 LOGS_DIR = ASSETS_DIR + '/logs'
+CHECKPOINTS_DIR = ASSETS_DIR + '/modelCheckpoints'

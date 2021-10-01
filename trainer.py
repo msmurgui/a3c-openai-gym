@@ -1,6 +1,6 @@
 from model import ActorCritic
 from envs import create_atari_env
-from utils.livePlotter import livePlotter
+from utils.livePlotter import LivePlotter
 import tensorflow as tf
 import numpy as np
 import time
@@ -31,6 +31,10 @@ class Trainer():
         state = tf.convert_to_tensor(state, dtype=np.float32)
         _, self.initialModelState = self.localModel.warmupCall(
             tf.expand_dims(state, 0))
+        
+        #self.plotter =  None
+        #if(trainerId == 0):
+        #    self.plotter = LivePlotter('Loss')
 
     def train(self):
         state = self.env.reset()
@@ -40,8 +44,9 @@ class Trainer():
 
         avgCount = 0
         movingAverageLoss = []
-        for _ in range(100):
+        for _ in range(20):
             movingAverageLoss.append(0)
+        movingAverageTotal = 0
 
         while not self.coordinator.should_stop():
             with tf.GradientTape() as tape:
@@ -105,13 +110,12 @@ class Trainer():
                                    logProbabilities, entropies, self.globalParams)
                 
                 if(self.trainerId == 0):
-                    print(self.name, " loss: ", loss)
-                    movingAverageLoss.pop(0)
+                    #print(self.name, " loss: ", loss)
+                    #self.plotter.add(loss)
+                    movingAverageTotal -= movingAverageLoss.pop(0)
                     movingAverageLoss.append(loss)
-                    total = 0
-                    for x in movingAverageLoss:
-                        total += x
-                    print(self.name, ' moving average Loss: ', total /
+                    movingAverageTotal += loss
+                    print(self.name, ' moving average Loss: ', movingAverageTotal /
                           len(movingAverageLoss), ' iter ', avgCount)
 
                 gradients = tape.gradient(
